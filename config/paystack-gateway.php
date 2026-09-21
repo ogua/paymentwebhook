@@ -53,6 +53,16 @@ return [
             'forward_secret' => env('SUSU_WEBHOOK_FORWARD_SECRET'),
         ],
 
+        // Kept as a separate prefix/entry from 'SUSU' above (not a sub-path
+        // of it) because SusuApp itself deliberately keeps desktop-license
+        // sales on a different internal endpoint from susu money-movement,
+        // so a license sale's fulfillment path never touches that code.
+        'SUSULIC' => [
+            'name' => 'SusuApp (desktop license)',
+            'forward_url' => env('SUSULIC_WEBHOOK_FORWARD_URL'),
+            'forward_secret' => env('SUSULIC_WEBHOOK_FORWARD_SECRET'),
+        ],
+
         'TERT' => [
             'name' => 'Ogua Tertiary',
             'forward_url' => env('TERT_WEBHOOK_FORWARD_URL'),
