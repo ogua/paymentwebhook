@@ -45,7 +45,7 @@ it('accepts a correctly signed webhook and queues it for forwarding', function (
     $payload = paystackPayload('TEST-abc123');
     [$body, $signature] = signedPaystackRequest($payload);
 
-    $response = $this->call('POST', '/api/webhooks/paystack', [], [], [], [
+    $response = $this->call('POST', '/webhooks/paystack', [], [], [], [
         'HTTP_x-paystack-signature' => $signature,
         'CONTENT_TYPE' => 'application/json',
     ], $body);
@@ -68,7 +68,7 @@ it('rejects a webhook whose signature does not match', function () {
     $payload = paystackPayload('TEST-abc123');
     [$body] = signedPaystackRequest($payload);
 
-    $response = $this->call('POST', '/api/webhooks/paystack', [], [], [], [
+    $response = $this->call('POST', '/webhooks/paystack', [], [], [], [
         'HTTP_x-paystack-signature' => 'clearly-wrong',
         'CONTENT_TYPE' => 'application/json',
     ], $body);
@@ -89,7 +89,7 @@ it('files a verified webhook for manual review when no project matches its refer
     $payload = paystackPayload('UNKNOWNPREFIX-abc123');
     [$body, $signature] = signedPaystackRequest($payload);
 
-    $this->call('POST', '/api/webhooks/paystack', [], [], [], [
+    $this->call('POST', '/webhooks/paystack', [], [], [], [
         'HTTP_x-paystack-signature' => $signature,
         'CONTENT_TYPE' => 'application/json',
     ], $body)->assertNoContent();
@@ -113,8 +113,8 @@ it('does not queue a duplicate delivery when Paystack retries the same event', f
         'CONTENT_TYPE' => 'application/json',
     ];
 
-    $this->call('POST', '/api/webhooks/paystack', [], [], [], $headers, $body)->assertNoContent();
-    $this->call('POST', '/api/webhooks/paystack', [], [], [], $headers, $body)->assertNoContent();
+    $this->call('POST', '/webhooks/paystack', [], [], [], $headers, $body)->assertNoContent();
+    $this->call('POST', '/webhooks/paystack', [], [], [], $headers, $body)->assertNoContent();
 
     expect(WebhookEvent::query()->count())->toBe(1);
     Queue::assertPushed(ForwardWebhookEvent::class, 1);
