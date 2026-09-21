@@ -17,6 +17,12 @@ return new class extends Migration
             $table->string('prefix')->nullable();
             $table->string('project')->nullable();
             $table->boolean('signature_valid')->default(false);
+            $table->string('paystack_signature')->nullable();
+            // The exact bytes Paystack sent, kept verbatim (not re-encoded)
+            // so it can be relayed byte-for-byte — a receiving project
+            // re-hashes it to verify Paystack's own signature, which only
+            // matches if nothing about the body changed in transit.
+            $table->text('raw_body');
             $table->json('payload');
             $table->string('status')->default('pending');
             $table->unsignedTinyInteger('attempts')->default(0);

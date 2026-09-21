@@ -46,16 +46,21 @@ class ForwardWebhookEvent implements ShouldQueue
             return;
         }
 
-        $body = $this->webhookEvent->payload;
-        $signature = hash_hmac('sha256', json_encode($body, JSON_THROW_ON_ERROR), (string) $resolved['forward_secret']);
+        // Relayed byte-for-byte, not re-encoded from the decoded payload —
+        // the receiving project re-checks Paystack's own signature against
+        // this body, which only matches the original bytes Paystack signed.
+        $rawBody = $this->webhookEvent->raw_body;
+        $gatewaySignature = hash_hmac('sha256', $rawBody, (string) $resolved['forward_secret']);
 
-        $response = Http::withHeaders([
-            'X-Gateway-Signature' => $signature,
-            'X-Gateway-Event' => $this->webhookEvent->event,
-            'X-Gateway-Reference' => $this->webhookEvent->reference,
-        ])
+        $response = Http::withBody($rawBody, 'application/json')
+            ->withHeaders([
+                'x-paystack-signature' => $this->webhookEvent->paystack_signature,
+                'X-Gateway-Signature' => $gatewaySignature,
+                'X-Gateway-Event' => $this->webhookEvent->event,
+                'X-Gateway-Reference' => $this->webhookEvent->reference,
+            ])
             ->timeout(15)
-            ->post($resolved['forward_url'], $body);
+            ->post($resolved['forward_url']);
 
         $this->webhookEvent->increment('attempts');
 

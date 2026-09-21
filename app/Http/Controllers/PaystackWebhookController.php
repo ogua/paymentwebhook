@@ -50,6 +50,8 @@ class PaystackWebhookController extends Controller
             'provider' => 'paystack',
             'reference' => $reference,
             'signature_valid' => $signatureValid,
+            'paystack_signature' => $request->header('x-paystack-signature'),
+            'raw_body' => $rawBody,
             'payload' => $payload,
             'prefix' => $resolved['prefix'] ?? null,
             'project' => $resolved['name'] ?? null,

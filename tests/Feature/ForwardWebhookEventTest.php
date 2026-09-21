@@ -21,6 +21,8 @@ beforeEach(function () {
 
 function makeWebhookEvent(string $reference): WebhookEvent
 {
+    $payload = ['event' => 'charge.success', 'data' => ['reference' => $reference]];
+
     return WebhookEvent::query()->create([
         'provider' => 'paystack',
         'event' => 'charge.success',
@@ -29,7 +31,9 @@ function makeWebhookEvent(string $reference): WebhookEvent
         'prefix' => 'TEST',
         'project' => 'Test Project',
         'signature_valid' => true,
-        'payload' => ['event' => 'charge.success', 'data' => ['reference' => $reference]],
+        'paystack_signature' => 'original-paystack-signature',
+        'raw_body' => json_encode($payload),
+        'payload' => $payload,
         'status' => WebhookEvent::STATUS_PENDING,
     ]);
 }
@@ -44,6 +48,8 @@ it('marks the event forwarded once the receiving project accepts it', function (
     (new ForwardWebhookEvent($event))->handle(app(WebhookRouter::class));
 
     Http::assertSent(fn (Request $request): bool => $request->hasHeader('X-Gateway-Signature')
+        && $request->header('x-paystack-signature')[0] === 'original-paystack-signature'
+        && $request->body() === $event->raw_body
         && $request->url() === 'https://test-project.example/internal/paystack-webhook');
 
     expect($event->refresh()->status)->toBe(WebhookEvent::STATUS_FORWARDED)
