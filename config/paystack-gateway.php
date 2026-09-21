@@ -41,10 +41,16 @@ return [
             'forward_secret' => env('POS_WEBHOOK_FORWARD_SECRET'),
         ],
 
-        'OGF' => [
-            'name' => 'Ogua Finance',
-            'forward_url' => env('OGF_WEBHOOK_FORWARD_URL'),
-            'forward_secret' => env('OGF_WEBHOOK_FORWARD_SECRET'),
+        'OGCARE' => [
+            'name' => 'OguaCare+',
+            'forward_url' => env('OGCARE_WEBHOOK_FORWARD_URL'),
+            'forward_secret' => env('OGCARE_WEBHOOK_FORWARD_SECRET'),
+        ],
+
+        'SUSU' => [
+            'name' => 'SusuApp',
+            'forward_url' => env('SUSU_WEBHOOK_FORWARD_URL'),
+            'forward_secret' => env('SUSU_WEBHOOK_FORWARD_SECRET'),
         ],
 
         'TERT' => [
