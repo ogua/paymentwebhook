@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $prefix
  * @property string|null $project
  * @property bool $signature_valid
+ * @property string|null $mode "live" or "test": which Paystack key signed it
  * @property string|null $paystack_signature
  * @property string $raw_body
  * @property array<string, mixed> $payload

@@ -58,6 +58,7 @@ class ForwardWebhookEvent implements ShouldQueue
                 'X-Gateway-Signature' => $gatewaySignature,
                 'X-Gateway-Event' => $this->webhookEvent->event,
                 'X-Gateway-Reference' => $this->webhookEvent->reference,
+                'X-Gateway-Mode' => (string) ($this->webhookEvent->mode ?? 'live'),
             ])
             ->timeout(15)
             ->post($resolved['forward_url']);

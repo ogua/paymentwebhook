@@ -14,6 +14,20 @@ return [
     'paystack_secret_key' => env('PAYSTACK_SECRET_KEY'),
 
     /*
+     * Test lane (optional). Paystack signs test-mode events with the test
+     * secret. They are accepted only when the payload says `domain: test`,
+     * and forwarded only for the prefixes listed here; a test event for any
+     * other project is kept for audit but never delivered. Leave the key
+     * empty to switch the lane off.
+     */
+    'paystack_test_secret_key' => env('PAYSTACK_TEST_SECRET_KEY'),
+
+    'test_prefixes' => array_values(array_filter(array_map(
+        fn ($prefix) => strtoupper(trim($prefix)),
+        explode(',', (string) env('PAYSTACK_TEST_PREFIXES', ''))
+    ))),
+
+    /*
      * The shared secret this gateway signs its own outbound forward with,
      * so a receiving project can tell a forwarded webhook actually came from
      * here and not from an arbitrary caller hitting its internal endpoint.

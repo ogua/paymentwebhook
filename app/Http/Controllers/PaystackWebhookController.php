@@ -24,7 +24,8 @@ class PaystackWebhookController extends Controller
         WebhookRouter $router,
     ): Response {
         $rawBody = $request->getContent();
-        $signatureValid = $verifier->verify($rawBody, $request->header('x-paystack-signature'));
+        $mode = $verifier->mode($rawBody, $request->header('x-paystack-signature'));
+        $signatureValid = $mode !== null;
 
         $payload = (array) $request->json()->all();
         $event = (string) ($payload['event'] ?? 'unknown');
@@ -46,10 +47,17 @@ class PaystackWebhookController extends Controller
 
         $resolved = $signatureValid ? $router->resolve($reference) : null;
 
+        // A test-mode event is only delivered to projects that opted into the
+        // test lane; for any other project it is kept here and goes nowhere.
+        $testLaneClosed = $mode === PaystackSignatureVerifier::MODE_TEST
+            && $resolved !== null
+            && ! in_array($resolved['prefix'], (array) config('paystack-gateway.test_prefixes', []), true);
+
         $webhookEvent->forceFill([
             'provider' => 'paystack',
             'reference' => $reference,
             'signature_valid' => $signatureValid,
+            'mode' => $mode,
             'paystack_signature' => $request->header('x-paystack-signature'),
             'raw_body' => $rawBody,
             'payload' => $payload,
@@ -57,13 +65,17 @@ class PaystackWebhookController extends Controller
             'project' => $resolved['name'] ?? null,
             'status' => match (true) {
                 ! $signatureValid => WebhookEvent::STATUS_FAILED,
-                $resolved === null => WebhookEvent::STATUS_UNMATCHED,
+                $resolved === null, $testLaneClosed => WebhookEvent::STATUS_UNMATCHED,
                 default => WebhookEvent::STATUS_PENDING,
             },
-            'last_error' => $signatureValid ? null : 'Signature verification failed.',
+            'last_error' => match (true) {
+                ! $signatureValid => 'Signature verification failed.',
+                $testLaneClosed => 'Test-mode event for a project not in PAYSTACK_TEST_PREFIXES.',
+                default => null,
+            },
         ])->save();
 
-        if ($signatureValid && $resolved !== null) {
+        if ($signatureValid && $resolved !== null && ! $testLaneClosed) {
             ForwardWebhookEvent::dispatch($webhookEvent);
         }
 
